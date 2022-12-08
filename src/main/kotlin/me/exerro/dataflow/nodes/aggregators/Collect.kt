@@ -6,8 +6,7 @@ import me.exerro.dataflow.InputValueSocket
 open class Collect<T>(
     count: Int,
     mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-    description: String = "Collect($count)",
-): AggregateBase<List<T>>(mode = mode, description = description) {
+): AggregateBase<List<T>>(mode = mode) {
     final override val inputs: List<InputValueSocket<T>>
 
     final override suspend fun emit() {
@@ -19,5 +18,8 @@ open class Collect<T>(
     init {
         require(count > 0)
         inputs = (0 until count).map { inputValue() }
+
+        @Suppress("LeakingThis")
+        setDescription("Collect($count)")
     }
 }

@@ -5,5 +5,8 @@ import kotlin.Pair
 /** TODO */
 class Pair<A, B>(
     mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-    description: String = "Pair",
-): BiAggregate<A, B, Pair<A, B>>(mode = mode, description = description, aggregate = { a, b -> a to b })
+): BiAggregate<A, B, Pair<A, B>>(mode = mode, aggregate = { a, b -> a to b }) {
+    init {
+        setDescription("Pair")
+    }
+}

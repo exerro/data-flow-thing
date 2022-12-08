@@ -26,8 +26,16 @@ abstract class Node {
     open val outputs: List<OutputStreamSocket<*>>
 
     /** TODO */
-    open fun describe() =
-        "Node(${inputs.size} inputs, ${outputs.size} outputs)"
+    open fun setDescription(description: String): Node {
+        this.description = description
+        return this
+    }
+
+    /** TODO */
+    open fun describe() = when (::description.isInitialized) {
+        true -> description
+        else -> "Node(${inputs.size} inputs, ${outputs.size} outputs)"
+    }
 
     companion object {
         /** TODO */
@@ -104,6 +112,8 @@ abstract class Node {
     ////////////////////////////////////////////////////////////////////////////
 
     private var socketId = 0
+
+    private lateinit var description: String
 
     // note: we separate this from the inputs/outputs so that the types of the
     //       public members are immutable but the types of the private members

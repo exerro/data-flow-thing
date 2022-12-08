@@ -4,11 +4,9 @@ import kotlinx.coroutines.CoroutineScope
 import me.exerro.dataflow.Node
 
 /** TODO */
-open class Unpair<A, B>(
-    private val description: String = "Unpair",
-): Node() {
+class Unpair<A, B>(): Node() {
     /** TODO */
-    val input = inputStream<kotlin.Pair<A, B>>()
+    val input = inputStream<Pair<A, B>>()
 
     /** TODO */
     val output1 = outputStream<A>()
@@ -18,17 +16,21 @@ open class Unpair<A, B>(
 
     ////////////////////////////////////////////////////////////////////////////
 
-    final override val inputs = listOf(input)
-    final override val outputs = listOf(output1, output2)
-
-    override fun describe() = description
+    override val inputs = listOf(input)
+    override val outputs = listOf(output1, output2)
 
     context(CoroutineScope)
-    final override suspend fun start() {
+    override suspend fun start() {
         while (true) {
             val (a, b) = input.pull()
             output1.push(a)
             output2.push(b)
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    init {
+        setDescription("Unpair")
     }
 }

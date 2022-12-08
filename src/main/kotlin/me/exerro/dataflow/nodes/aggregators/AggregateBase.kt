@@ -10,7 +10,6 @@ import kotlin.time.Duration
 /** TODO */
 abstract class AggregateBase<in T>(
     private val mode: AggregateUpdateMode,
-    private val description: String,
 ): Node() {
     /** TODO */
     val output = outputStream<T>()
@@ -25,8 +24,6 @@ abstract class AggregateBase<in T>(
 
     final override val outputs: List<OutputStreamSocket<T>> = listOf(output)
 
-    override fun describe() = description
-
     context(CoroutineScope)
     final override suspend fun start() {
         emit()
@@ -37,6 +34,8 @@ abstract class AggregateBase<in T>(
             is AggregateUpdateMode.Periodically -> startPeriodic(mode.interval)
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////
 
     context(CoroutineScope)
     private suspend fun startAll() {

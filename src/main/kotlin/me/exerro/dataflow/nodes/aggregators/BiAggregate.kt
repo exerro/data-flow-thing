@@ -3,9 +3,8 @@ package me.exerro.dataflow.nodes.aggregators
 /** TODO */
 open class BiAggregate<out T1, out T2, in R>(
     mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-    description: String = "BiAggregate",
     private val aggregate: (T1, T2) -> R,
-): AggregateBase<R>(mode, description) {
+): AggregateBase<R>(mode) {
     /** TODO */
     val input1 = inputValue<T1>()
 
@@ -16,5 +15,12 @@ open class BiAggregate<out T1, out T2, in R>(
 
     final override suspend fun emit() {
         output.push(aggregate(input1.latestValue, input2.latestValue))
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    init {
+        @Suppress("LeakingThis")
+        setDescription("BiAggregate")
     }
 }

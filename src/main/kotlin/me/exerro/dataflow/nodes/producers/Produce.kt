@@ -4,12 +4,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import me.exerro.dataflow.Node
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /** TODO */
 open class Produce<in T>(
     private val items: Iterable<T>,
-    private val description: String = "Produce",
     private val init: suspend context (CoroutineScope) () -> Unit = {},
     private val pre: suspend context (CoroutineScope) () -> Unit = {},
     private val post: suspend context (CoroutineScope) () -> Unit = {},
@@ -17,21 +15,17 @@ open class Produce<in T>(
     /** TODO */
     val output = outputStream<T>()
 
-    // TODO: .withDelay() etc?
+    /** TODO */
+    fun setDelay(delay: Duration) =
+        Produce(items, init = init + { delay(delay) }, pre, post = post)
 
     /** TODO */
-    constructor(
-        items: Iterable<T>,
-        interval: Duration,
-        delay: Duration = 0.milliseconds,
-        description: String = "Produce",
-    ): this(items, description = description, init = { delay(delay) }, post = { delay(interval) })
+    fun setInterval(interval: Duration) =
+        Produce(items, init, pre, post = post + { delay(interval) })
 
     ////////////////////////////////////////////////////////////////////////////
 
     final override val outputs = listOf(output)
-
-    override fun describe() = description
 
     context(CoroutineScope)
     final override suspend fun start() {
@@ -41,5 +35,23 @@ open class Produce<in T>(
             output.push(item)
             post(this@CoroutineScope)
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    private operator fun (suspend context (CoroutineScope) () -> Unit).plus(
+        other: suspend context (CoroutineScope) () -> Unit
+    ): suspend context (CoroutineScope) () -> Unit = {
+        this(getCoroutineScopeFix)
+        other(getCoroutineScopeFix)
+    }
+
+    /** Needed 'cause the Kotlin compiler is a bit dumb right now :( */
+    context (CoroutineScope)
+    private val getCoroutineScopeFix get() = this@CoroutineScope
+
+    init {
+        @Suppress("LeakingThis")
+        setDescription("Produce")
     }
 }

@@ -6,16 +6,14 @@ import me.exerro.dataflow.InputValueSocket
 open class Aggregate<T>(
     count: Int,
     mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-    description: String = "Aggregate($count)",
     private val aggregate: (List<T>) -> T,
-): AggregateBase<T>(mode = mode, description = description) {
+): AggregateBase<T>(mode = mode) {
     /** TODO */
     constructor(
         count: Int,
         mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-        description: String = "Aggregate($count)",
         aggregate: (T, T) -> T,
-    ): this(count, mode, description, { items -> items.reduce(aggregate) })
+    ): this(count, mode, { items -> items.reduce(aggregate) })
 
     /** @see Aggregate */
     companion object {
@@ -23,62 +21,56 @@ open class Aggregate<T>(
         fun <T> sum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
             add: (T, T) -> T,
-        ) = Aggregate(count, mode, description = description, add)
+        ) = Aggregate(count, mode, add).also { it.setDescription("Sum($count)") }
 
         /** TODO */
         fun intSum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
-        ) = sum<Int>(count, mode, description) { a, b -> a + b }
+        ) = sum<Int>(count, mode) { a, b -> a + b }
 
         /** TODO */
         fun longSum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
-        ) = sum<Long>(count, mode, description) { a, b -> a + b }
+        ) = sum<Long>(count, mode) { a, b -> a + b }
 
         /** TODO */
         fun unsignedIntSum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
-        ) = sum<UInt>(count, mode, description) { a, b -> a + b }
+        ) = sum<UInt>(count, mode) { a, b -> a + b }
 
         /** TODO */
         fun unsignedLongSum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
-        ) = sum<ULong>(count, mode, description) { a, b -> a + b }
+        ) = sum<ULong>(count, mode) { a, b -> a + b }
 
         /** TODO */
         fun floatSum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
-        ) = sum<Float>(count, mode, description) { a, b -> a + b }
+        ) = sum<Float>(count, mode) { a, b -> a + b }
 
         /** TODO */
         fun doubleSum(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = "Sum($count)",
-        ) = sum<Double>(count, mode, description) { a, b -> a + b }
+        ) = sum<Double>(count, mode) { a, b -> a + b }
 
         /** TODO */
         fun concatenate(
             count: Int,
             separator: String = "",
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-            description: String = when (separator) {
-                "" -> "Concatenate($count)"
+        ) = Aggregate(count, mode) { items -> items.joinToString(separator) } .also {
+            it.setDescription(when (separator) {
+                ""   -> "Concatenate($count)"
                 else -> "Concatenate($count, $separator)"
-            },
-        ) = Aggregate(count, mode, description) { items -> items.joinToString(separator) }
+            })
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -94,5 +86,8 @@ open class Aggregate<T>(
     init {
         require(count > 0)
         inputs = (0 until count).map { inputValue() }
+
+        @Suppress("LeakingThis")
+        setDescription("Aggregate($count)")
     }
 }

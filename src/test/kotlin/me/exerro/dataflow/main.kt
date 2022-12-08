@@ -9,8 +9,11 @@ import kotlin.time.Duration.Companion.milliseconds
 
 fun main() {
     val config = Configuration {
-        val p1 = Produce(listOf(1, 2, 3, 4, 5), interval = 1000.milliseconds)
-        val p2 = Produce(listOf("s1", "s2", "s3", "s4"), interval = 600.milliseconds)
+        val p1 = Produce(listOf(1, 2, 3, 4, 5))
+            .setInterval(1000.milliseconds)
+        val p2 = Produce(listOf("s1", "s2", "s3", "s4"))
+            .setDelay(400.milliseconds)
+            .setInterval(600.milliseconds)
         val p1s = Transform<Int, String>(transform = Any::toString)
         val updateMode = AggregateUpdateMode.Periodically(500.milliseconds)
         val agg = Aggregate<String>(2, mode = updateMode) { (a, b) ->
