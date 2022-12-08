@@ -35,7 +35,7 @@ class MiddleNode: Node() {
             val number = input1.pull()
             val string = input2.pull()
 
-            output.push("I got two new values: $number and $string")
+            output.push("\u001b[36mI got two new values: $number and $string\u001b[0m")
         }
     }
 }
