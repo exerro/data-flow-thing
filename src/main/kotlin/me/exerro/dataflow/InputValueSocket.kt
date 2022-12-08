@@ -12,7 +12,8 @@ package me.exerro.dataflow
 class InputValueSocket<T> internal constructor(
     node: Node,
     id: Int,
-): InputStreamSocket<T>(node, id) {
+    parallelConsumers: Int,
+): InputStreamSocket<T>(node, id, parallelConsumers) {
     /**
      * Latest value received by the socket.
      *

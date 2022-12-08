@@ -1,14 +1,21 @@
 package me.exerro.dataflow
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+
 class ProducerNode<T>(
+    private val timeout: Long,
     private val values: List<T>,
 ): Node() {
-    constructor(vararg values: T): this(values.toList())
-
     val output = outputStream<T>()
 
+    override fun describe() =
+        "Producer of $values"
+
+    context (CoroutineScope)
     override suspend fun start() {
         for (value in values) {
+            delay(timeout)
             output.push(value)
         }
     }
@@ -19,6 +26,10 @@ class MiddleNode: Node() {
     val input2 = inputStream<String>()
     val output = outputStream<String>()
 
+    override fun describe() =
+        "Fancy aggregator"
+
+    context (CoroutineScope)
     override suspend fun start() {
         while (true) {
             val number = input1.pull()
@@ -32,6 +43,10 @@ class MiddleNode: Node() {
 class FinalNode: Node() {
     val input = inputStream<String>()
 
+    override fun describe() =
+        "Consumer of strings"
+
+    context (CoroutineScope)
     override suspend fun start() {
         while (true) {
             val value = input.pull()
@@ -42,8 +57,8 @@ class FinalNode: Node() {
 
 fun main() {
     val config = Configuration {
-        val p1 = ProducerNode(1, 2, 3, 4, 5)
-        val p2 = ProducerNode("s1", "s2", "s3", "s4")
+        val p1 = ProducerNode(1000, listOf(1, 2, 3, 4, 5))
+        val p2 = ProducerNode(500, listOf("s1", "s2", "s3", "s4"))
         val middle = MiddleNode()
         val end = FinalNode()
 

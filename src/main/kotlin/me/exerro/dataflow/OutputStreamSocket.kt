@@ -5,8 +5,19 @@ class OutputStreamSocket<T> internal constructor(
     override val node: Node,
     override val id: Int,
 ): Socket {
-/** TODO */
+    /** TODO */
     fun push(value: T) {
-        TODO()
+        for (connection in connections)
+            connection.push(value)
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    internal fun addConnection(connection: SocketConnection<T>) {
+        connections += connection
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    private val connections = mutableListOf<SocketConnection<T>>()
 }
