@@ -17,12 +17,13 @@ import kotlinx.coroutines.CoroutineScope
  * @see inputValue
  * @see outputStream
  */
+// TODO: add protections from having a node in multiple configurations
 abstract class Node {
     /** Every input belonging to this node. */
-    val inputs: List<InputStreamSocket<*>>
+    open val inputs: List<InputStreamSocket<*>>
 
     /** Every output belonging to this node. */
-    val outputs: List<OutputStreamSocket<*>>
+    open val outputs: List<OutputStreamSocket<*>>
 
     /** TODO */
     open fun describe() =

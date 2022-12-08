@@ -70,6 +70,16 @@ class SocketConnection<T> internal constructor(
         }
     }
 
+    internal fun pullOrNull(): T? =
+        lock.withLock {
+            if (buffer.isNotEmpty()) {
+                buffer.removeAt(0)
+            }
+            else {
+                null
+            }
+        }
+
     internal fun push(value: T) {
         lock.withLock {
             if (pullBuffer.isNotEmpty()) {

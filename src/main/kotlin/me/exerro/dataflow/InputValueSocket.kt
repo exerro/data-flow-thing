@@ -9,7 +9,7 @@ package me.exerro.dataflow
  * @see pull
  * @see pullWithTimeout
  */
-class InputValueSocket<T> internal constructor(
+class InputValueSocket<out T> internal constructor(
     node: Node,
     id: Int,
     parallelConsumers: Int,

@@ -1,19 +1,24 @@
 package me.exerro.dataflow
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.createCoroutine
 
 /** TODO */
 class Configuration(
+    allowUnboundInputs: Boolean = false,
+    allowUnboundOutputs: Boolean = true,
     init: context (ConfigurationContext) () -> Unit,
 ) {
     /** TODO */
     val nodes: Set<Node>
+
+    /** TODO */
+    val unboundInputs: List<InputStreamSocket<*>>
+
+    /** TODO */
+    val unboundOutputs: List<OutputStreamSocket<*>>
 
     /** TODO */
     context (CoroutineScope)
@@ -30,6 +35,7 @@ class Configuration(
 
     /** Non-suspend equivalent of [start]. */
     fun startSync() {
+        @OptIn(DelicateCoroutinesApi::class)
         val job = GlobalScope.launch {
             val jobs = nodes.map { node ->
                 launch {
@@ -67,10 +73,21 @@ class Configuration(
             .toSet()
 
         val allInputs = nodes.flatMap { it.inputs }
+        val allOutputs = nodes.flatMap { it.outputs }
 
-        for (input in allInputs) {
-            if (!input.hasConnection())
-                error("TODO")
-        }
+        if (!allowUnboundInputs)
+            for (input in allInputs) {
+                if (!input.hasConnection())
+                    error("TODO")
+            }
+
+        if (!allowUnboundOutputs)
+            for (output in allOutputs) {
+                if (!output.hasConnection())
+                    error("TODO")
+            }
+
+        unboundInputs = allInputs.filter { !it.hasConnection() }
+        unboundOutputs = allOutputs.filter { !it.hasConnection() }
     }
 }

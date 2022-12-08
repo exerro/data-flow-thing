@@ -1,0 +1,25 @@
+package me.exerro.dataflow.nodes.consumers
+
+import kotlinx.coroutines.CoroutineScope
+import me.exerro.dataflow.Node
+
+/** TODO */
+open class Consume<out T>(
+    private val description: String = "Consume",
+    private val onItem: suspend context (CoroutineScope) (T) -> Unit,
+): Node() {
+    /** TODO */
+    val input = inputStream<T>()
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    final override val inputs = listOf(input)
+
+    override fun describe() = description
+
+    context(CoroutineScope)
+    final override suspend fun start() {
+        while (true)
+            onItem(this@CoroutineScope, input.pull())
+    }
+}

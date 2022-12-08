@@ -1,7 +1,7 @@
 package me.exerro.dataflow
 
 /** TODO */
-class OutputStreamSocket<T> internal constructor(
+class OutputStreamSocket<in T> internal constructor(
     override val node: Node,
     override val id: Int,
 ): Socket {
@@ -13,7 +13,10 @@ class OutputStreamSocket<T> internal constructor(
 
     ////////////////////////////////////////////////////////////////////////////
 
-    internal fun addConnection(connection: SocketConnection<T>) {
+    internal fun hasConnection() =
+        connections.isNotEmpty()
+
+    internal fun addConnection(connection: SocketConnection<@UnsafeVariance T>) {
         connections += connection
     }
 

@@ -10,13 +10,13 @@ import kotlin.time.Duration
  * @see pull
  * @see pullWithTimeout
  */
-open class InputStreamSocket<T> internal constructor(
+open class InputStreamSocket<out T> internal constructor(
     override val node: Node,
     override val id: Int,
     internal val parallelConsumers: Int,
 ): Socket {
     /**
-     * Latest value received by the socket, if present, or null otherwise.
+     * Latest value pulled by the socket, if present, or null otherwise.
      *
      * @see pull
      */
@@ -26,11 +26,22 @@ open class InputStreamSocket<T> internal constructor(
      * Wait for a new value to be received and return it.
      *
      * @see latestValue
+     * @see pullOrNull
      * @see pullWithTimeout
      */
     suspend fun pull(): T {
         val value = connection.pull()
         this.value = value
+        return value
+    }
+
+    /**
+     * TODO
+     */
+    fun pullOrNull(): T? {
+        val value = connection.pullOrNull()
+        if (value != null)
+            this.value = value
         return value
     }
 
@@ -61,14 +72,14 @@ open class InputStreamSocket<T> internal constructor(
     internal fun hasConnection() =
         ::connection.isInitialized
 
-    internal fun setConnection(connection: SocketConnection<T>) {
+    internal fun setConnection(connection: SocketConnection<@UnsafeVariance T>) {
         if (hasConnection())
             error("TODO")
 
         this.connection = connection
     }
 
-    internal var value: T? = null; private set
+    internal var value: @UnsafeVariance T? = null; private set
 
     ////////////////////////////////////////////////////////////////////////////
 
