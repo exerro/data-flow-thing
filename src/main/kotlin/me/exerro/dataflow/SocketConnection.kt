@@ -9,6 +9,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 /** TODO */
+// TODO: split this into a public interface and an internal Binding type
 class SocketConnection<T> internal constructor(
     val from: OutputStreamSocket<T>,
     val to: InputStreamSocket<T>,

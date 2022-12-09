@@ -44,5 +44,5 @@ fun main() {
     }
 
     println(config.asGraphvizString())
-//    config.startSync()
+    config.startSync()
 }
