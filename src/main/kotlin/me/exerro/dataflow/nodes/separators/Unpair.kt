@@ -6,25 +6,25 @@ import me.exerro.dataflow.Node
 /** TODO */
 class Unpair<A, B>(): Node() {
     /** TODO */
-    val input = inputStream<Pair<A, B>>()
+    val input by inputStream<Pair<A, B>>(suppressName = true)
 
     /** TODO */
-    val output1 = outputStream<A>()
+    val first by outputStream<A>()
 
     /** TODO */
-    val output2 = outputStream<B>()
+    val second by outputStream<B>()
 
     ////////////////////////////////////////////////////////////////////////////
 
     override val inputs = listOf(input)
-    override val outputs = listOf(output1, output2)
+    override val outputs = listOf(first, second)
 
     context(CoroutineScope)
     override suspend fun start() {
         while (true) {
             val (a, b) = input.pull()
-            output1.push(a)
-            output2.push(b)
+            first.push(a)
+            second.push(b)
         }
     }
 

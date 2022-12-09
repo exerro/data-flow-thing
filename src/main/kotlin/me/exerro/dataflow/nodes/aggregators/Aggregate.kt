@@ -85,7 +85,7 @@ open class Aggregate<T>(
 
     init {
         require(count > 0)
-        inputs = (0 until count).map { inputValue() }
+        inputs = (0 until count).map { createInputValue() }
 
         @Suppress("LeakingThis")
         setDescription("Aggregate($count)")

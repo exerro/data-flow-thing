@@ -12,7 +12,7 @@ abstract class AggregateBase<in T>(
     private val mode: AggregateUpdateMode,
 ): Node() {
     /** TODO */
-    val output = outputStream<T>()
+    val output by outputStream<T>(suppressName = true)
 
     ////////////////////////////////////////////////////////////////////////////
 

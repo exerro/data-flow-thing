@@ -40,6 +40,13 @@ class SocketConnection<T> internal constructor(
         fun findDiscarded(current: List<T>, new: T): Int
     }
 
+    ////////////////////////////////////////////////////////////
+
+    operator fun component1() = from
+    operator fun component2() = to
+
+    ////////////////////////////////////////////////////////////
+
     /** @see SocketConnection */
     companion object {
         /** TODO */

@@ -1,6 +1,7 @@
 package me.exerro.dataflow
 
 import kotlinx.coroutines.CoroutineScope
+import kotlin.reflect.KProperty
 
 /**
  * A [Node] is a unit of behaviour or functionality with a fixed set of
@@ -59,10 +60,11 @@ abstract class Node {
     protected abstract suspend fun start()
 
     /** TODO */
-    protected fun <T> inputStream(
+    protected fun <T> createInputStream(
         parallelConsumers: Int = 1,
+        name: String? = null,
     ): InputStreamSocket<T> {
-        val socket = InputStreamSocket<T>(this, socketId++, parallelConsumers)
+        val socket = InputStreamSocket<T>(this, socketId++, name, parallelConsumers)
         privateInputs += socket
         return socket
     }
@@ -75,19 +77,76 @@ abstract class Node {
      *
      * @see inputStream
      */
-    protected fun <T> inputValue(
+    protected fun <T> createInputValue(
         parallelConsumers: Int = 1,
+        name: String? = null,
     ): InputValueSocket<T> {
-        val socket = InputValueSocket<T>(this, socketId++, parallelConsumers)
+        val socket = InputValueSocket<T>(this, socketId++, name, parallelConsumers)
         privateInputs += socket
         return socket
     }
 
     /** TODO */
-    protected fun <T> outputStream(): OutputStreamSocket<T> {
-        val socket = OutputStreamSocket<T>(this, socketId++)
+    protected fun <T> createOutputStream(
+        name: String? = null,
+    ): OutputStreamSocket<T> {
+        val socket = OutputStreamSocket<T>(this, socketId++, name)
         privateOutputs += socket
         return socket
+    }
+
+    /** TODO */
+    protected fun <T> inputStream(
+        parallelConsumers: Int = 1,
+        suppressName: Boolean = false,
+    ) = SocketNameDelegate(suppressName) { name ->
+        val socket = InputStreamSocket<T>(this, socketId++, name, parallelConsumers)
+        privateInputs += socket
+        socket
+    }
+
+    /**
+     * Similar to [inputStream] but returns an [InputValueSocket] instead. As a
+     * result, the socket returned will have a value when asked, and this node
+     * will not be [started][start] until the resultant socket has received a
+     * value.
+     *
+     * @see inputStream
+     */
+    protected fun <T> inputValue(
+        parallelConsumers: Int = 1,
+        suppressName: Boolean = false,
+    ) = SocketNameDelegate(suppressName) { name ->
+        val socket = InputValueSocket<T>(this, socketId++, name, parallelConsumers)
+        privateInputs += socket
+        socket
+    }
+
+    /** TODO */
+    protected fun <T> outputStream(
+        suppressName: Boolean = false,
+    ) = SocketNameDelegate(suppressName) { name ->
+        val socket = OutputStreamSocket<T>(this, socketId++, name)
+        privateOutputs += socket
+        socket
+    }
+
+    /** TODO */
+    protected class SocketNameDelegate<T: Any>(
+        private val suppressName: Boolean,
+        private val getValue: (String?) -> T,
+    ) {
+        operator fun provideDelegate(thisRef: Any?, prop: KProperty<*>): SocketDelegate<T> {
+            return SocketDelegate(getValue(prop.name.takeIf { !suppressName }))
+        }
+    }
+
+    /** TODO */
+    protected class SocketDelegate<T>(
+        private val value: T,
+    ) {
+        operator fun getValue(thisRef: Any?, prop: KProperty<*>) =
+            value
     }
 
     ////////////////////////////////////////////////////////////////////////////

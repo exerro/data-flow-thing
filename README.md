@@ -20,6 +20,24 @@ See [`main.kt`](https://github.com/exerro/data-flow-thing/blob/main/src/test/kot
 for an example test application. To run this, clone the repository and run
 `./gradlew testApplication`.
 
+The data flow matches the following graph:
+
+![Graph of the data flow built in `main.kt`](img/example-graph.png)
+
+The output you see should roughly be as follows:
+
+    Received: I got two new values: 2 and 1s
+    Received: I got two new values: 2 and 1s
+    Received: I got two new values: 3 and 2s
+    Received: I got two new values: 3 and 3s
+    Received: I got two new values: 4 and 4s
+    Received: I got two new values: 4 and 4s
+    Received: I got two new values: 5 and 4s
+    Received: I got two new values: 5 and 4s
+    Received: I got two new values: 6 and 4s
+    Received: I got two new values: 6 and 4s
+    Received: I got two new values: 6 and 4s
+
 ## Use the library
 
 #### With Gradle (`build.gradle.kts`)

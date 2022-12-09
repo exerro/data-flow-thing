@@ -13,7 +13,7 @@ open class Produce<in T>(
     private val post: suspend context (CoroutineScope) () -> Unit = {},
 ): Node() {
     /** TODO */
-    val output = outputStream<T>()
+    val output by outputStream<T>(suppressName = true)
 
     /** TODO */
     fun setDelay(delay: Duration) =

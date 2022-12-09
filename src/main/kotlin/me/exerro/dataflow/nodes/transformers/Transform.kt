@@ -8,10 +8,10 @@ open class Transform<out T, in R>(
     private val transform: (T) -> R,
 ): Node() {
     /** TODO */
-    val input = inputStream<T>()
+    val input by inputStream<T>(suppressName = true)
 
     /** TODO */
-    val output = outputStream<R>()
+    val output by outputStream<R>(suppressName = true)
 
     ////////////////////////////////////////////////////////////////////////////
 

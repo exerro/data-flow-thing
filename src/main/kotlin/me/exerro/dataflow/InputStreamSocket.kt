@@ -13,6 +13,7 @@ import kotlin.time.Duration
 open class InputStreamSocket<out T> internal constructor(
     override val node: Node,
     override val id: Int,
+    name: String?,
     internal val parallelConsumers: Int,
 ): Socket {
     /**
@@ -57,6 +58,13 @@ open class InputStreamSocket<out T> internal constructor(
         TODO()
 
     ////////////////////////////////////////////////////////////////////////////
+
+    final override var name: String? = name; private set
+
+    override fun setName(name: String?): InputStreamSocket<T> {
+        this.name = name
+        return this
+    }
 
     override fun equals(other: Any?) =
         other is InputStreamSocket<*> && node == other.node && id == other.id

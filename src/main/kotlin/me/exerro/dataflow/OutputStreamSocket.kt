@@ -4,11 +4,21 @@ package me.exerro.dataflow
 class OutputStreamSocket<in T> internal constructor(
     override val node: Node,
     override val id: Int,
+    name: String?,
 ): Socket {
     /** TODO */
     fun push(value: T) {
         for (connection in connections)
             connection.push(value)
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    override var name: String? = name; private set
+
+    override fun setName(name: String?): OutputStreamSocket<T> {
+        this.name = name
+        return this
     }
 
     ////////////////////////////////////////////////////////////////////////////

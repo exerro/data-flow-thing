@@ -12,8 +12,9 @@ package me.exerro.dataflow
 class InputValueSocket<out T> internal constructor(
     node: Node,
     id: Int,
+    name: String?,
     parallelConsumers: Int,
-): InputStreamSocket<T>(node, id, parallelConsumers) {
+): InputStreamSocket<T>(node, id, name, parallelConsumers) {
     /**
      * Latest value received by the socket.
      *
@@ -22,6 +23,11 @@ class InputValueSocket<out T> internal constructor(
      * @see pull
      */
     override val latestValue: T get() = value!!
+
+    override fun setName(name: String?): InputValueSocket<T> {
+        super.setName(name)
+        return this
+    }
 
     override fun toString() =
         "InputValueSocket($node, $id)"

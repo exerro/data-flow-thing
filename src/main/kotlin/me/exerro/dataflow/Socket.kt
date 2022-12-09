@@ -14,4 +14,10 @@ interface Socket {
      * what this socket is.
      */
     val id: Int
+
+    /** TODO */
+    val name: String?
+
+    /** TODO */
+    fun setName(name: String?): Socket
 }
