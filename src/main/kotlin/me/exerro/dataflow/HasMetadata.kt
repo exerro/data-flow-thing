@@ -3,10 +3,10 @@ package me.exerro.dataflow
 /** TODO */
 interface HasMetadata {
     /** TODO */
-    fun <T> hasMetadata(key: MetadataKey<T>): Boolean
+    infix fun <T> hasMetadata(key: MetadataKey<T>): Boolean
 
     /** TODO */
-    fun <T> getMetadataOrThrow(key: MetadataKey<T>): T
+    infix fun <T> getMetadataOrThrow(key: MetadataKey<T>): T
 
     /** TODO */
     fun <T> setMetadata(key: MetadataKey<T>, value: T)
@@ -22,7 +22,7 @@ interface HasMetadata {
     ////////////////////////////////////////////////////////////
 
     /** TODO */
-    fun <T> getMetadataOrNull(key: MetadataKey<T>): T? {
+    infix fun <T> getMetadataOrNull(key: MetadataKey<T>): T? {
         if (!hasMetadata(key))
             return null
         return getMetadataOrThrow(key)
