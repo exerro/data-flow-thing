@@ -4,6 +4,7 @@ import me.exerro.dataflow.internal.MetadataManager
 import me.exerro.dataflow.internal.SocketBinding
 
 /** TODO */
+// TODO: toString impl!
 class OutputStreamSocket<in T> internal constructor(
     override val node: Node,
     override val id: Int,

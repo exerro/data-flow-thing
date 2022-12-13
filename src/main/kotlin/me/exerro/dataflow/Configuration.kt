@@ -12,13 +12,21 @@ class Configuration(
 ) {
     /** TODO */
     val nodes: Set<Node>
-        get() = privateConnections
+        get() =
+            privateConnections
             .flatMap { listOf(it.from.node, it.to.node) }
+            .toSet() +
+            privateVirtualConnections
+            .flatMap { listOf(it.from, it.to) }
             .toSet()
 
     /** TODO */
     val connections: Set<SocketConnection<*>>
         get() = privateConnections
+
+    /** TODO */
+    val virtualConnections: Set<VirtualNodeConnection>
+        get() = privateVirtualConnections
 
     /** TODO */
     val unboundInputs: Set<InputStreamSocket<*>>
@@ -77,6 +85,7 @@ class Configuration(
 
         result.append("digraph G {\n")
         result.append("    rankdir=LR\n")
+        result.append("    compound=true\n")
         result.append("    fontname=\"Helvetica,Arial,sans-serif\"\n")
         result.append("    edge[fontname=\"Helvetica,Arial,sans-serif\"]\n")
         result.append("    node[fontname=\"Helvetica,Arial,sans-serif\"]\n")
@@ -109,6 +118,12 @@ class Configuration(
             addSockets(nodeId, node.inputs)
 
             result.append("        }\n")
+            result.append("        subgraph cluster_${nodeId}_pseudo {\n")
+            result.append("            style=invis\n")
+            result.append("            label=\"\"\n")
+            result.append("            n${nodeId}sp[style=invis width=0 shape=point]\n")
+//            result.append("            n${nodeId}sp[width=0.1 shape=point]\n")
+            result.append("        }\n")
             result.append("        subgraph cluster_${nodeId}_outputs {\n")
             result.append("            style=invis\n")
             result.append("            label=\"\"\n")
@@ -117,10 +132,14 @@ class Configuration(
 
             result.append("        }\n")
 
+            val iWeight = 1f / node.inputs.size
             for (inputSocket in node.inputs) {
-                for (outputSocket in node.outputs) {
-                    result.append("        n${nodeId}s${inputSocket.id} -> n${nodeId}s${outputSocket.id}\n")
-                }
+                result.append("        n${nodeId}s${inputSocket.id} -> n${nodeId}sp [weight=$iWeight]\n")
+            }
+
+            val oWeight = 1f / node.outputs.size
+            for (outputSocket in node.outputs) {
+                result.append("        n${nodeId}sp -> n${nodeId}s${outputSocket.id} [weight=$oWeight]\n")
             }
 
             result.append("    }\n")
@@ -134,6 +153,12 @@ class Configuration(
             result.append("    n${nodeId1}s${socket1.id} -> n${nodeId2}s${socket2.id}\n")
         }
 
+        for (connection in virtualConnections) {
+            val nodeId1 = nodeMap[connection.from] ?: continue
+            val nodeId2 = nodeMap[connection.to] ?: continue
+            result.append("    n${nodeId1}sp -> n${nodeId2}sp [style=dashed ltail=cluster_${nodeId1} lhead=cluster_${nodeId2}]\n")
+        }
+
         result.append("}")
 
         return result.toString()
@@ -143,6 +168,7 @@ class Configuration(
 
     /** TODO */
     private val privateConnections = mutableSetOf<MutableSocketConnection<*>>()
+    private val privateVirtualConnections = mutableSetOf<VirtualNodeConnection>()
 
     init {
         val transformers = mutableListOf<ConfigurationTransformer>()
@@ -158,8 +184,18 @@ class Configuration(
                 return connection
             }
 
+            override fun connect(from: Node, to: Node): VirtualNodeConnection {
+                val connection = VirtualNodeConnection(from, to)
+                privateVirtualConnections += connection
+                return connection
+            }
+
             override fun disconnect(connection: SocketConnection<*>) {
                 privateConnections.remove(connection)
+            }
+
+            override fun disconnect(connection: VirtualNodeConnection) {
+                privateVirtualConnections.remove(connection)
             }
 
             override fun transform(transformer: ConfigurationTransformer) {

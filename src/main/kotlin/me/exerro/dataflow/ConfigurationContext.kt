@@ -12,6 +12,12 @@ interface ConfigurationContext {
     ): MutableSocketConnection<T>
 
     /** TODO */
+    fun connect(
+        from: Node,
+        to: Node,
+    ): VirtualNodeConnection
+
+    /** TODO */
     fun <T> connect(
         outputs: List<OutputStreamSocket<T>>,
         inputs: List<InputStreamSocket<T>>,
@@ -24,6 +30,11 @@ interface ConfigurationContext {
     /** TODO */
     fun disconnect(
         connection: SocketConnection<*>,
+    )
+
+    /** TODO */
+    fun disconnect(
+        connection: VirtualNodeConnection,
     )
 
     /** TODO */

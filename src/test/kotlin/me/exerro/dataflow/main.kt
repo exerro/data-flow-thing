@@ -1,5 +1,8 @@
 package me.exerro.dataflow
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.serializer
 import me.exerro.dataflow.nodes.transformers.Transform
 import me.exerro.dataflow.nodes.aggregators.Aggregate
 import me.exerro.dataflow.nodes.aggregators.AggregateUpdateMode
@@ -7,24 +10,51 @@ import me.exerro.dataflow.nodes.consumers.Consume
 import me.exerro.dataflow.nodes.producers.Produce
 import kotlin.time.Duration.Companion.milliseconds
 
+class FakeUdpSend<T>(serializer: KSerializer<T>): Node() {
+    val input = inputStream<T>()
+
+    context(CoroutineScope)
+    override suspend fun start() {
+        // would send stuff
+    }
+}
+
+class FakeUdpReceive<T>(serializer: KSerializer<T>): Node() {
+    val output = outputStream<T>()
+
+    context(CoroutineScope)
+    override suspend fun start() {
+        // would send stuff
+    }
+}
+
 object IncrementAllNumbers: ConfigurationTransformer {
     context(ConfigurationContext)
     override fun transform(configuration: Configuration) {
         for (connection in configuration.connections.filterIsSocketType<Int>()) {
-            val newNode = Transform<Int, Int> { it + 1 }
-            newNode.label = "Inserted incrementer"
-            newNode.input.label = "in"
-            newNode.output.label = "out"
+            if (!connection.from.node.hasMetadata(MyTag))
+                continue
+
+            val sendNode = FakeUdpSend(Int.serializer())
+            sendNode.label = "UDP Send"
+            sendNode.input.label = "in"
+
+            val receiveNode = FakeUdpReceive(Int.serializer())
+            receiveNode.label = "UDP Receive"
+            receiveNode.output.label = "out"
 
             disconnect(connection)
-            connection.from connectsTo newNode.input
-            newNode.output connectsTo connection.to
+            connection.from connectsTo sendNode.input
+            connect(sendNode, receiveNode)
+            receiveNode.output connectsTo connection.to
         }
     }
 }
 
+object MyTag: MetadataKey<Unit>("my-tag", Unit.serializer())
+
 fun main() {
-    val config = Configuration {
+    val config = Configuration(allowUnboundInputs = true) {
         val p1 = Produce(listOf(1, 2, 3, 4, 5))
             .withMetadata(MetadataKey.Label, "1 .. 5")
             .setInterval(1000.milliseconds)
@@ -56,6 +86,8 @@ fun main() {
         p2.output connectsTo rev.input
         rev.output connectsTo agg.inputs[1]
         agg.output connectsTo end.input
+
+        p1.setMetadata(MyTag, Unit)
     }
 
     println(config.asGraphvizString())
