@@ -16,8 +16,8 @@ fun main() {
             .withMetadata(MetadataKey.Label, "'s1' .. 's4'")
             .setDelay(400.milliseconds)
             .setInterval(600.milliseconds)
-        val inc = Transform<Int, Int> { it + 1 }
-            .withMetadata(MetadataKey.Label, "Increment")
+        val inc by Transform<Int, Int> { it + 1 }
+//            .withMetadata(MetadataKey.Label, "Increment")
         val rev = Transform<String, String> { it.reversed() }
             .withMetadata(MetadataKey.Label, "Reverse")
         val p1s = Transform<Int, String>(transform = Any::toString)

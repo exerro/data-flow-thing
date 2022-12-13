@@ -18,7 +18,7 @@ open class Collect<T>(
 
     init {
         require(count > 0)
-        inputs = (0 until count).map { createInputValue() }
+        inputs = (0 until count).map { inputValue() }
 
         @Suppress("LeakingThis")
         setMetadata(MetadataKey.Label, "Collect($count)")

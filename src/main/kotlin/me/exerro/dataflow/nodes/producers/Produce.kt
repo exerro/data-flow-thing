@@ -14,7 +14,7 @@ open class Produce<in T>(
     private val post: suspend context (CoroutineScope) () -> Unit = {},
 ): Node() {
     /** TODO */
-    val output by outputStream<T>(suppressLabel = true)
+    val output = outputStream<T>()
 
     /** TODO */
     fun setDelay(delay: Duration) =

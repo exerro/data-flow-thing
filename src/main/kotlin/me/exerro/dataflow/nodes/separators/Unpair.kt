@@ -7,13 +7,13 @@ import me.exerro.dataflow.Node
 /** TODO */
 class Unpair<A, B>(): Node() {
     /** TODO */
-    val input by inputStream<Pair<A, B>>(suppressLabel = true)
+    val input = inputStream<Pair<A, B>>()
 
     /** TODO */
-    val first by outputStream<A>()
+    val first = outputStream<A>()
 
     /** TODO */
-    val second by outputStream<B>()
+    val second = outputStream<B>()
 
     ////////////////////////////////////////////////////////////////////////////
 

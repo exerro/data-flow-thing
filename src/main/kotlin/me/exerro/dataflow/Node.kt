@@ -2,7 +2,6 @@ package me.exerro.dataflow
 
 import kotlinx.coroutines.CoroutineScope
 import me.exerro.dataflow.internal.MetadataManager
-import kotlin.reflect.KProperty
 
 /**
  * A [Node] is a unit of behaviour or functionality with a fixed set of
@@ -27,25 +26,13 @@ abstract class Node: HasMetadata by MetadataManager() {
     /** Every output belonging to this node. */
     open val outputs: List<OutputStreamSocket<*>>
 
-    /** TODO */
+    /**
+     * Describe this node using its label or a generated string if there is no
+     * label.
+     */
     fun describe() = when {
         hasMetadata(MetadataKey.Label) -> getMetadataOrThrow(MetadataKey.Label)
         else -> "Node(${inputs.size} inputs, ${outputs.size} outputs)"
-    }
-
-    companion object {
-        /** TODO */
-        // TODO: is this even useful? you won't be able to connect the sockets
-        //       nicely
-        operator fun invoke(
-            init: Node.() -> suspend context (CoroutineScope) () -> Unit
-        ) = object: Node() {
-            val startFn: suspend (CoroutineScope) -> Unit = init()
-
-            context(CoroutineScope) override suspend fun start() {
-                startFn(this@CoroutineScope)
-            }
-        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -55,53 +42,12 @@ abstract class Node: HasMetadata by MetadataManager() {
     protected abstract suspend fun start()
 
     /** TODO */
-    protected fun <T> createInputStream(
-        parallelConsumers: Int = 1,
-        label: String? = null,
-    ): InputStreamSocket<T> {
-        val socket = InputStreamSocket<T>(this, socketId++, parallelConsumers)
-        socket.label = label
-        privateInputs += socket
-        return socket
-    }
-
-    /**
-     * Similar to [inputStream] but returns an [InputValueSocket] instead. As a
-     * result, the socket returned will have a value when asked, and this node
-     * will not be [started][start] until the resultant socket has received a
-     * value.
-     *
-     * @see inputStream
-     */
-    protected fun <T> createInputValue(
-        parallelConsumers: Int = 1,
-        label: String? = null,
-    ): InputValueSocket<T> {
-        val socket = InputValueSocket<T>(this, socketId++, parallelConsumers)
-        socket.label = label
-        privateInputs += socket
-        return socket
-    }
-
-    /** TODO */
-    protected fun <T> createOutputStream(
-        label: String? = null,
-    ): OutputStreamSocket<T> {
-        val socket = OutputStreamSocket<T>(this, socketId++)
-        socket.label = label
-        privateOutputs += socket
-        return socket
-    }
-
-    /** TODO */
     protected fun <T> inputStream(
         parallelConsumers: Int = 1,
-        suppressLabel: Boolean = false,
-    ) = SocketLabelDelegate(suppressLabel) { label ->
+    ): InputStreamSocket<T> {
         val socket = InputStreamSocket<T>(this, socketId++, parallelConsumers)
-        socket.label = label
         privateInputs += socket
-        socket
+        return socket
     }
 
     /**
@@ -114,40 +60,17 @@ abstract class Node: HasMetadata by MetadataManager() {
      */
     protected fun <T> inputValue(
         parallelConsumers: Int = 1,
-        suppressLabel: Boolean = false,
-    ) = SocketLabelDelegate(suppressLabel) { label ->
+    ): InputValueSocket<T> {
         val socket = InputValueSocket<T>(this, socketId++, parallelConsumers)
-        socket.label = label
         privateInputs += socket
-        socket
+        return socket
     }
 
     /** TODO */
-    protected fun <T> outputStream(
-        suppressLabel: Boolean = false,
-    ) = SocketLabelDelegate(suppressLabel) { label ->
+    protected fun <T> outputStream(): OutputStreamSocket<T> {
         val socket = OutputStreamSocket<T>(this, socketId++)
-        socket.label = label
         privateOutputs += socket
-        socket
-    }
-
-    /** TODO */
-    protected class SocketLabelDelegate<T: Any>(
-        private val suppressLabel: Boolean,
-        private val getValue: (String?) -> T,
-    ) {
-        operator fun provideDelegate(thisRef: Any?, prop: KProperty<*>): SocketDelegate<T> {
-            return SocketDelegate(getValue(prop.name.takeIf { !suppressLabel }))
-        }
-    }
-
-    /** TODO */
-    protected class SocketDelegate<T>(
-        private val value: T,
-    ) {
-        operator fun getValue(thisRef: Any?, prop: KProperty<*>) =
-            value
+        return socket
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -180,7 +103,9 @@ abstract class Node: HasMetadata by MetadataManager() {
     private val privateOutputs = mutableListOf<OutputStreamSocket<*>>()
 
     init {
+        @Suppress("LeakingThis")
         inputs = privateInputs
+        @Suppress("LeakingThis")
         outputs = privateOutputs
     }
 }

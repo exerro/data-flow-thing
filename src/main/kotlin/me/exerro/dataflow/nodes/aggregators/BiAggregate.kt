@@ -8,10 +8,10 @@ open class BiAggregate<out T1, out T2, in R>(
     private val aggregate: (T1, T2) -> R,
 ): AggregateBase<R>(mode) {
     /** TODO */
-    val first by inputValue<T1>()
+    val first = inputValue<T1>()
 
     /** TODO */
-    val second by inputValue<T2>()
+    val second = inputValue<T2>()
 
     ////////////////////////////////////////////////////////////////////////////
 

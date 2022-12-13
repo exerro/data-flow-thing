@@ -9,7 +9,7 @@ open class Consume<out T>(
     private val onItem: suspend context (CoroutineScope) (T) -> Unit,
 ): Node() {
     /** TODO */
-    val input by inputStream<T>(suppressLabel = true)
+    val input = inputStream<T>()
 
     ////////////////////////////////////////////////////////////////////////////
 
