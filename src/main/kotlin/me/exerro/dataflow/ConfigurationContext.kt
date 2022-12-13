@@ -12,7 +12,7 @@ interface ConfigurationContext {
     ): MutableSocketConnection<T>
 
     /** TODO */
-    fun connect(
+    fun connectVirtual(
         from: Node,
         to: Node,
     ): VirtualNodeConnection

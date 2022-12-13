@@ -23,6 +23,12 @@ inline infix fun <reified T> List<OutputStreamSocket<T>>.connectsTo(
     input: List<InputStreamSocket<T>>,
 ) = connect(outputs = this, input, typeOf<T>())
 
+/** TODO */
+context (ConfigurationContext)
+infix fun Node.virtuallyConnectsTo(
+    input: Node,
+) = connectVirtual(from = this, input)
+
 ////////////////////////////////////////////////////////////////
 
 operator fun <N: HasMetadata> N.provideDelegate(thisRef: Any?, prop: KProperty<*>) =

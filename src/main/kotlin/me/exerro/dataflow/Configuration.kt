@@ -150,13 +150,15 @@ class Configuration(
             val socket2 = connection.to
             val nodeId1 = nodeMap[socket1.node] ?: continue
             val nodeId2 = nodeMap[socket2.node] ?: continue
-            result.append("    n${nodeId1}s${socket1.id} -> n${nodeId2}s${socket2.id}\n")
+            val label = connection.getMetadataOrNull(MetadataKey.Label) ?: ""
+            result.append("    n${nodeId1}s${socket1.id} -> n${nodeId2}s${socket2.id} [fontcolor=grey label=\"$label\"]\n")
         }
 
         for (connection in virtualConnections) {
             val nodeId1 = nodeMap[connection.from] ?: continue
             val nodeId2 = nodeMap[connection.to] ?: continue
-            result.append("    n${nodeId1}sp -> n${nodeId2}sp [style=dashed ltail=cluster_${nodeId1} lhead=cluster_${nodeId2}]\n")
+            val label = connection.getMetadataOrNull(MetadataKey.Label) ?: ""
+            result.append("    n${nodeId1}sp -> n${nodeId2}sp [style=dashed ltail=cluster_${nodeId1} lhead=cluster_${nodeId2} fontcolor=grey label=\"$label\"]\n")
         }
 
         result.append("}")
@@ -184,7 +186,7 @@ class Configuration(
                 return connection
             }
 
-            override fun connect(from: Node, to: Node): VirtualNodeConnection {
+            override fun connectVirtual(from: Node, to: Node): VirtualNodeConnection {
                 val connection = VirtualNodeConnection(from, to)
                 privateVirtualConnections += connection
                 return connection

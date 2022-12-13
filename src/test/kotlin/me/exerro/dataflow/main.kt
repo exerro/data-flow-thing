@@ -31,22 +31,24 @@ class FakeUdpReceive<T>(serializer: KSerializer<T>): Node() {
 object IncrementAllNumbers: ConfigurationTransformer {
     context(ConfigurationContext)
     override fun transform(configuration: Configuration) {
-        for (connection in configuration.connections.filterIsSocketType<Int>()) {
+        for (connection in configuration.connections.filterIsSocketType<String>()) {
             if (!connection.from.node.hasMetadata(MyTag))
                 continue
 
-            val sendNode = FakeUdpSend(Int.serializer())
+            val sendNode = FakeUdpSend(String.serializer())
             sendNode.label = "UDP Send"
             sendNode.input.label = "in"
 
-            val receiveNode = FakeUdpReceive(Int.serializer())
+            val receiveNode = FakeUdpReceive(String.serializer())
             receiveNode.label = "UDP Receive"
             receiveNode.output.label = "out"
 
             disconnect(connection)
             connection.from connectsTo sendNode.input
-            connect(sendNode, receiveNode)
-            receiveNode.output connectsTo connection.to
+            sendNode virtuallyConnectsTo receiveNode withLabel "udp"
+            val c2 = receiveNode.output connectsTo connection.to
+
+            connection.cloneMetadata(c2)
         }
     }
 }
@@ -83,11 +85,11 @@ fun main() {
         p1.output connectsTo inc.input
         inc.output connectsTo p1s.input
         p1s.output connectsTo agg.inputs[0] withBufferSize 1
-        p2.output connectsTo rev.input
-        rev.output connectsTo agg.inputs[1]
+        p2.output connectsTo rev.input withLabel "s"
+        rev.output connectsTo agg.inputs[1] withLabel "reverse(s)"
         agg.output connectsTo end.input
 
-        p1.setMetadata(MyTag, Unit)
+        p2.setMetadata(MyTag, Unit)
     }
 
     println(config.asGraphvizString())

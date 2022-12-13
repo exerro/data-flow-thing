@@ -1,6 +1,7 @@
 package me.exerro.dataflow
 
 import me.exerro.dataflow.SocketConnection.OverflowStrategy
+import me.exerro.dataflow.internal.MetadataManager
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -12,7 +13,7 @@ abstract class SocketConnection<T> internal constructor(
     val to: InputStreamSocket<T>,
     /** TODO */
     val type: KType,
-) {
+): HasMetadata by MetadataManager() {
     /** TODO */
     open val bufferSize: Int = DEFAULT_BUFFER_SIZE
 
