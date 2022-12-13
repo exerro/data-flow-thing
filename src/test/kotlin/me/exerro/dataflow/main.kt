@@ -1,59 +1,57 @@
 package me.exerro.dataflow
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import me.exerro.dataflow.nodes.transformers.Transform
 import me.exerro.dataflow.nodes.aggregators.Aggregate
 import me.exerro.dataflow.nodes.aggregators.AggregateUpdateMode
 import me.exerro.dataflow.nodes.consumers.Consume
+import me.exerro.dataflow.nodes.consumers.UdpSend
 import me.exerro.dataflow.nodes.producers.Produce
+import me.exerro.dataflow.nodes.producers.UdpReceive
+import me.exerro.dataflow.nodes.transformers.Decode
+import me.exerro.dataflow.nodes.transformers.Encode
+import me.exerro.dataflow.nodes.transformers.UdpUnpack
+import java.net.InetAddress
 import kotlin.time.Duration.Companion.milliseconds
-
-class FakeUdpSend<T>(serializer: KSerializer<T>): Node() {
-    val input = inputStream<T>()
-
-    context(CoroutineScope)
-    override suspend fun start() {
-        // would send stuff
-    }
-}
-
-class FakeUdpReceive<T>(serializer: KSerializer<T>): Node() {
-    val output = outputStream<T>()
-
-    context(CoroutineScope)
-    override suspend fun start() {
-        // would send stuff
-    }
-}
 
 object IncrementAllNumbers: ConfigurationTransformer {
     context(ConfigurationContext)
     override fun transform(configuration: Configuration) {
         for (connection in configuration.connections.filterIsSocketType<String>()) {
-            if (!connection.from.node.hasMetadata(MyTag))
+            if (!(connection hasMetadata SplitUdp))
                 continue
 
-            val sendNode = FakeUdpSend(String.serializer())
-            sendNode.label = "UDP Send"
-            sendNode.input.label = "in"
+            val sendEncodeNode = Encode(String.serializer())
+            sendEncodeNode.label = "UDP Encode"
+            sendEncodeNode.input.label = "in"
 
-            val receiveNode = FakeUdpReceive(String.serializer())
+            val sendNode = UdpSend(port  = 1234, address = InetAddress.getLocalHost())
+            sendNode.label = "UDP Send"
+
+            val receiveNode = UdpReceive(port = 1234)
             receiveNode.label = "UDP Receive"
-            receiveNode.output.label = "out"
+
+            val receiveUnpackNode = UdpUnpack()
+            receiveUnpackNode.label = "UDP Unpack"
+
+            val receiveDecodeNode = Decode(String.serializer())
+            receiveDecodeNode.label = "UDP Decode"
+            receiveDecodeNode.output.label = "out"
 
             disconnect(connection)
-            connection.from connectsTo sendNode.input
+            connection.from connectsTo sendEncodeNode.input
+            sendEncodeNode.encoded connectsTo sendNode.input
             sendNode virtuallyConnectsTo receiveNode withLabel "udp"
-            val c2 = receiveNode.output connectsTo connection.to
+            receiveNode.output connectsTo receiveUnpackNode.packets
+            receiveUnpackNode.data connectsTo receiveDecodeNode.encoded
+            val c2 = receiveDecodeNode.output connectsTo connection.to
 
             connection.cloneMetadata(c2)
         }
     }
 }
 
-object MyTag: MetadataKey<Unit>("my-tag", Unit.serializer())
+object SplitUdp: MetadataKey<Unit>("split-udp", Unit.serializer())
 
 fun main() {
     val config = Configuration(allowUnboundInputs = true) {
@@ -85,11 +83,9 @@ fun main() {
         p1.output connectsTo inc.input
         inc.output connectsTo p1s.input
         p1s.output connectsTo agg.inputs[0] withBufferSize 1
-        p2.output connectsTo rev.input withLabel "s"
+        (p2.output connectsTo rev.input withLabel "s").setMetadata(SplitUdp, Unit)
         rev.output connectsTo agg.inputs[1] withLabel "reverse(s)"
         agg.output connectsTo end.input
-
-        p2.setMetadata(MyTag, Unit)
     }
 
     println(config.asGraphvizString())
