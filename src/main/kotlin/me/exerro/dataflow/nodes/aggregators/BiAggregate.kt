@@ -1,5 +1,7 @@
 package me.exerro.dataflow.nodes.aggregators
 
+import me.exerro.dataflow.MetadataKey
+
 /** TODO */
 open class BiAggregate<out T1, out T2, in R>(
     mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
@@ -21,6 +23,6 @@ open class BiAggregate<out T1, out T2, in R>(
 
     init {
         @Suppress("LeakingThis")
-        setDescription("BiAggregate")
+        setMetadata(MetadataKey.Label, "BiAggregate")
     }
 }

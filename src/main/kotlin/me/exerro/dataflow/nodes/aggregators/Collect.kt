@@ -1,6 +1,7 @@
 package me.exerro.dataflow.nodes.aggregators
 
 import me.exerro.dataflow.InputValueSocket
+import me.exerro.dataflow.MetadataKey
 
 /** TODO */
 open class Collect<T>(
@@ -20,6 +21,6 @@ open class Collect<T>(
         inputs = (0 until count).map { createInputValue() }
 
         @Suppress("LeakingThis")
-        setDescription("Collect($count)")
+        setMetadata(MetadataKey.Label, "Collect($count)")
     }
 }

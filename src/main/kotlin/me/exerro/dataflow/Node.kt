@@ -1,6 +1,7 @@
 package me.exerro.dataflow
 
 import kotlinx.coroutines.CoroutineScope
+import me.exerro.dataflow.internal.MetadataManager
 import kotlin.reflect.KProperty
 
 /**
@@ -19,7 +20,7 @@ import kotlin.reflect.KProperty
  * @see outputStream
  */
 // TODO: add protections from having a node in multiple configurations
-abstract class Node {
+abstract class Node: HasMetadata by MetadataManager() {
     /** Every input belonging to this node. */
     open val inputs: List<InputStreamSocket<*>>
 
@@ -27,14 +28,8 @@ abstract class Node {
     open val outputs: List<OutputStreamSocket<*>>
 
     /** TODO */
-    open fun setDescription(description: String): Node {
-        this.description = description
-        return this
-    }
-
-    /** TODO */
-    open fun describe() = when (::description.isInitialized) {
-        true -> description
+    fun describe() = when {
+        hasMetadata(MetadataKey.Label) -> getMetadataOrThrow(MetadataKey.Label)
         else -> "Node(${inputs.size} inputs, ${outputs.size} outputs)"
     }
 
@@ -62,9 +57,10 @@ abstract class Node {
     /** TODO */
     protected fun <T> createInputStream(
         parallelConsumers: Int = 1,
-        name: String? = null,
+        label: String? = null,
     ): InputStreamSocket<T> {
-        val socket = InputStreamSocket<T>(this, socketId++, name, parallelConsumers)
+        val socket = InputStreamSocket<T>(this, socketId++, parallelConsumers)
+        socket.label = label
         privateInputs += socket
         return socket
     }
@@ -79,18 +75,20 @@ abstract class Node {
      */
     protected fun <T> createInputValue(
         parallelConsumers: Int = 1,
-        name: String? = null,
+        label: String? = null,
     ): InputValueSocket<T> {
-        val socket = InputValueSocket<T>(this, socketId++, name, parallelConsumers)
+        val socket = InputValueSocket<T>(this, socketId++, parallelConsumers)
+        socket.label = label
         privateInputs += socket
         return socket
     }
 
     /** TODO */
     protected fun <T> createOutputStream(
-        name: String? = null,
+        label: String? = null,
     ): OutputStreamSocket<T> {
-        val socket = OutputStreamSocket<T>(this, socketId++, name)
+        val socket = OutputStreamSocket<T>(this, socketId++)
+        socket.label = label
         privateOutputs += socket
         return socket
     }
@@ -98,9 +96,10 @@ abstract class Node {
     /** TODO */
     protected fun <T> inputStream(
         parallelConsumers: Int = 1,
-        suppressName: Boolean = false,
-    ) = SocketNameDelegate(suppressName) { name ->
-        val socket = InputStreamSocket<T>(this, socketId++, name, parallelConsumers)
+        suppressLabel: Boolean = false,
+    ) = SocketLabelDelegate(suppressLabel) { label ->
+        val socket = InputStreamSocket<T>(this, socketId++, parallelConsumers)
+        socket.label = label
         privateInputs += socket
         socket
     }
@@ -115,29 +114,31 @@ abstract class Node {
      */
     protected fun <T> inputValue(
         parallelConsumers: Int = 1,
-        suppressName: Boolean = false,
-    ) = SocketNameDelegate(suppressName) { name ->
-        val socket = InputValueSocket<T>(this, socketId++, name, parallelConsumers)
+        suppressLabel: Boolean = false,
+    ) = SocketLabelDelegate(suppressLabel) { label ->
+        val socket = InputValueSocket<T>(this, socketId++, parallelConsumers)
+        socket.label = label
         privateInputs += socket
         socket
     }
 
     /** TODO */
     protected fun <T> outputStream(
-        suppressName: Boolean = false,
-    ) = SocketNameDelegate(suppressName) { name ->
-        val socket = OutputStreamSocket<T>(this, socketId++, name)
+        suppressLabel: Boolean = false,
+    ) = SocketLabelDelegate(suppressLabel) { label ->
+        val socket = OutputStreamSocket<T>(this, socketId++)
+        socket.label = label
         privateOutputs += socket
         socket
     }
 
     /** TODO */
-    protected class SocketNameDelegate<T: Any>(
-        private val suppressName: Boolean,
+    protected class SocketLabelDelegate<T: Any>(
+        private val suppressLabel: Boolean,
         private val getValue: (String?) -> T,
     ) {
         operator fun provideDelegate(thisRef: Any?, prop: KProperty<*>): SocketDelegate<T> {
-            return SocketDelegate(getValue(prop.name.takeIf { !suppressName }))
+            return SocketDelegate(getValue(prop.name.takeIf { !suppressLabel }))
         }
     }
 
@@ -171,8 +172,6 @@ abstract class Node {
     ////////////////////////////////////////////////////////////////////////////
 
     private var socketId = 0
-
-    private lateinit var description: String
 
     // note: we separate this from the inputs/outputs so that the types of the
     //       public members are immutable but the types of the private members

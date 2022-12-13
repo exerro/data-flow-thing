@@ -1,6 +1,8 @@
 package me.exerro.dataflow.nodes.aggregators
 
 import me.exerro.dataflow.InputValueSocket
+import me.exerro.dataflow.MetadataKey
+import me.exerro.dataflow.withMetadata
 
 /** TODO */
 open class Aggregate<T>(
@@ -22,7 +24,7 @@ open class Aggregate<T>(
             count: Int,
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
             add: (T, T) -> T,
-        ) = Aggregate(count, mode, add).also { it.setDescription("Sum($count)") }
+        ) = Aggregate(count, mode, add).withMetadata(MetadataKey.Label, "Sum($count)")
 
         /** TODO */
         fun intSum(
@@ -65,12 +67,11 @@ open class Aggregate<T>(
             count: Int,
             separator: String = "",
             mode: AggregateUpdateMode = AggregateUpdateMode.OnAnyChanged,
-        ) = Aggregate(count, mode) { items -> items.joinToString(separator) } .also {
-            it.setDescription(when (separator) {
+        ) = Aggregate(count, mode) { items -> items.joinToString(separator) }
+            .withMetadata(MetadataKey.Label, when (separator) {
                 ""   -> "Concatenate($count)"
                 else -> "Concatenate($count, $separator)"
             })
-        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -88,6 +89,6 @@ open class Aggregate<T>(
         inputs = (0 until count).map { createInputValue() }
 
         @Suppress("LeakingThis")
-        setDescription("Aggregate($count)")
+        setMetadata(MetadataKey.Label, "Aggregate($count)")
     }
 }

@@ -1,6 +1,7 @@
 package me.exerro.dataflow.nodes.consumers
 
 import kotlinx.coroutines.CoroutineScope
+import me.exerro.dataflow.MetadataKey
 import me.exerro.dataflow.Node
 
 /** TODO */
@@ -8,7 +9,7 @@ open class Consume<out T>(
     private val onItem: suspend context (CoroutineScope) (T) -> Unit,
 ): Node() {
     /** TODO */
-    val input by inputStream<T>(suppressName = true)
+    val input by inputStream<T>(suppressLabel = true)
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -24,6 +25,6 @@ open class Consume<out T>(
 
     init {
         @Suppress("LeakingThis")
-        setDescription("Consume")
+        setMetadata(MetadataKey.Label, "Consume")
     }
 }

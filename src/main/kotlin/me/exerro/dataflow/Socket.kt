@@ -4,7 +4,7 @@ package me.exerro.dataflow
  * An input to/output from a [Node]. Exposes the [node] it belongs to and a
  * unique [id] for that socket.
  */
-interface Socket {
+interface Socket: HasMetadata {
     /** Node that this socket belongs to. */
     val node: Node
 
@@ -14,10 +14,4 @@ interface Socket {
      * what this socket is.
      */
     val id: Int
-
-    /** TODO */
-    val name: String?
-
-    /** TODO */
-    fun setName(name: String?): Socket
 }

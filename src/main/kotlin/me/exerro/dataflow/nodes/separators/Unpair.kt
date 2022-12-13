@@ -1,12 +1,13 @@
 package me.exerro.dataflow.nodes.separators
 
 import kotlinx.coroutines.CoroutineScope
+import me.exerro.dataflow.MetadataKey
 import me.exerro.dataflow.Node
 
 /** TODO */
 class Unpair<A, B>(): Node() {
     /** TODO */
-    val input by inputStream<Pair<A, B>>(suppressName = true)
+    val input by inputStream<Pair<A, B>>(suppressLabel = true)
 
     /** TODO */
     val first by outputStream<A>()
@@ -31,6 +32,6 @@ class Unpair<A, B>(): Node() {
     ////////////////////////////////////////////////////////////////////////////
 
     init {
-        setDescription("Unpair")
+        setMetadata(MetadataKey.Label, "Unpair")
     }
 }

@@ -1,24 +1,16 @@
 package me.exerro.dataflow
 
+import me.exerro.dataflow.internal.MetadataManager
+
 /** TODO */
 class OutputStreamSocket<in T> internal constructor(
     override val node: Node,
     override val id: Int,
-    name: String?,
-): Socket {
+): Socket, HasMetadata by MetadataManager() {
     /** TODO */
     fun push(value: T) {
         for (connection in connections)
             connection.push(value)
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    override var name: String? = name; private set
-
-    override fun setName(name: String?): OutputStreamSocket<T> {
-        this.name = name
-        return this
     }
 
     ////////////////////////////////////////////////////////////////////////////

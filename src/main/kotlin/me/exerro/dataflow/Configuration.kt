@@ -69,10 +69,11 @@ class Configuration(
 
         fun addSockets(nodeId: Int, sockets: Iterable<Socket>) {
             for (socket in sockets) {
-                val extra = if (socket.name != null)
-                    "[width=0 height=0 shape=rect style=rounded label=\"${socket.name}\"]"
-                else
-                    "[width=0.2 shape=point]"
+                val extra = if (socket.hasMetadata(MetadataKey.Label)) {
+                    val label = socket.getMetadataOrThrow(MetadataKey.Label)
+                    "[width=0 height=0 shape=rect style=rounded label=\"$label\"]"
+                }
+                else "[width=0.2 shape=point]"
 
                 result.append("            n${nodeId}s${socket.id}$extra\n")
             }

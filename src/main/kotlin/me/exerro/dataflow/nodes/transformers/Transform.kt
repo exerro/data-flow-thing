@@ -1,6 +1,7 @@
 package me.exerro.dataflow.nodes.transformers
 
 import kotlinx.coroutines.CoroutineScope
+import me.exerro.dataflow.MetadataKey
 import me.exerro.dataflow.Node
 
 /** TODO */
@@ -8,10 +9,10 @@ open class Transform<out T, in R>(
     private val transform: (T) -> R,
 ): Node() {
     /** TODO */
-    val input by inputStream<T>(suppressName = true)
+    val input by inputStream<T>(suppressLabel = true)
 
     /** TODO */
-    val output by outputStream<R>(suppressName = true)
+    val output by outputStream<R>(suppressLabel = true)
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -29,6 +30,6 @@ open class Transform<out T, in R>(
 
     init {
         @Suppress("LeakingThis")
-        setDescription("Transform")
+        setMetadata(MetadataKey.Label, "Transform")
     }
 }

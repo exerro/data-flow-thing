@@ -2,6 +2,7 @@ package me.exerro.dataflow.nodes.producers
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import me.exerro.dataflow.MetadataKey
 import me.exerro.dataflow.Node
 import kotlin.time.Duration
 
@@ -13,15 +14,17 @@ open class Produce<in T>(
     private val post: suspend context (CoroutineScope) () -> Unit = {},
 ): Node() {
     /** TODO */
-    val output by outputStream<T>(suppressName = true)
+    val output by outputStream<T>(suppressLabel = true)
 
     /** TODO */
     fun setDelay(delay: Duration) =
         Produce(items, init = init + { delay(delay) }, pre, post = post)
+            .also { cloneMetadata(it) }
 
     /** TODO */
     fun setInterval(interval: Duration) =
         Produce(items, init, pre, post = post + { delay(interval) })
+            .also { cloneMetadata(it) }
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -52,6 +55,6 @@ open class Produce<in T>(
 
     init {
         @Suppress("LeakingThis")
-        setDescription("Produce")
+        setMetadata(MetadataKey.Label, "Produce")
     }
 }
