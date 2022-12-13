@@ -1,5 +1,7 @@
 package me.exerro.dataflow
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.yield
 import me.exerro.dataflow.internal.MetadataManager
 import kotlin.time.Duration
 
@@ -37,7 +39,12 @@ open class InputStreamSocket<out T> internal constructor(
     }
 
     /**
-     * TODO
+     * Attempt to pull a value, returning it immediately if one is available, or
+     * returning null immediately otherwise.
+     *
+     * @see latestValue
+     * @see pull
+     * @see pullWithTimeout
      */
     fun pullOrNull(): T? {
         val value = connection.pullOrNull()
@@ -54,8 +61,9 @@ open class InputStreamSocket<out T> internal constructor(
      * @see latestValue
      * @see pull
      */
-    suspend fun pullWithTimeout(timeout: Duration): T? =
-        TODO()
+    context (CoroutineScope)
+    suspend fun pullWithTimeout(timeout: Duration) =
+        pullBefore(before = System.nanoTime() + timeout.inWholeNanoseconds)
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +91,21 @@ open class InputStreamSocket<out T> internal constructor(
     internal var value: @UnsafeVariance T? = null; private set
 
     ////////////////////////////////////////////////////////////////////////////
+
+    context (CoroutineScope)
+    private tailrec suspend fun pullBefore(before: Long): T? {
+        // if we've hit the time limit, return a value or null, we don't care
+        if (System.nanoTime() >= before)
+            return pullOrNull()
+
+        return when (val result = pullOrNull()) {
+            null -> {
+                yield()
+                pullBefore(before)
+            }
+            else -> result
+        }
+    }
 
     private val metadata = mutableMapOf<MetadataKey<*>, Any?>()
     private lateinit var connection: SocketConnection<T>
