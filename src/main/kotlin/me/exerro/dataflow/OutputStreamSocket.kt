@@ -1,6 +1,7 @@
 package me.exerro.dataflow
 
 import me.exerro.dataflow.internal.MetadataManager
+import me.exerro.dataflow.internal.SocketBinding
 
 /** TODO */
 class OutputStreamSocket<in T> internal constructor(
@@ -9,20 +10,20 @@ class OutputStreamSocket<in T> internal constructor(
 ): Socket, HasMetadata by MetadataManager() {
     /** TODO */
     fun push(value: T) {
-        for (connection in connections)
+        for (connection in bindings)
             connection.push(value)
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
-    internal fun hasConnection() =
-        connections.isNotEmpty()
+    internal fun hasAnyBindings() =
+        bindings.isNotEmpty()
 
-    internal fun addConnection(connection: SocketConnection<@UnsafeVariance T>) {
-        connections += connection
+    internal fun addBinding(binding: SocketBinding<@UnsafeVariance T>) {
+        bindings += binding
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private val connections = mutableListOf<SocketConnection<T>>()
+    private val bindings = mutableListOf<SocketBinding<T>>()
 }

@@ -1,31 +1,23 @@
 package me.exerro.dataflow
 
 import me.exerro.dataflow.SocketConnection.OverflowStrategy
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 /** TODO */
-// TODO: split this into a public interface and an internal Binding type
-class SocketConnection<T> internal constructor(
+abstract class SocketConnection<T> internal constructor(
+    /** TODO */
     val from: OutputStreamSocket<T>,
+    /** TODO */
     val to: InputStreamSocket<T>,
-    underflowBufferSize: Int,
+    /** TODO */
+    val type: KType,
 ) {
     /** TODO */
-    infix fun withBufferSize(size: Int): SocketConnection<T> {
-        bufferSize = size
-        return this
-    }
+    open val bufferSize: Int = DEFAULT_BUFFER_SIZE
 
     /** TODO */
-    infix fun withOverflowStrategy(strategy: OverflowStrategy<T>): SocketConnection<T> {
-        overflowStrategy = strategy
-        return this
-    }
+    open val overflowStrategy: OverflowStrategy<T> = discardOldest
 
     /**
      * Strategy for handling overflows in the buffer of
@@ -40,6 +32,9 @@ class SocketConnection<T> internal constructor(
          */
         fun findDiscarded(current: List<T>, new: T): Int
     }
+
+    inline fun <reified T> isType() =
+        type == typeOf<T>()
 
     ////////////////////////////////////////////////////////////
 
@@ -58,62 +53,18 @@ class SocketConnection<T> internal constructor(
 
         /** TODO */
         val discardNewest = OverflowStrategy<Any?> { current, _ -> current.size }
+
+        /** TODO */
+        fun <T> create(
+            from: OutputStreamSocket<T>,
+            to: InputStreamSocket<T>,
+            type: KType,
+        ) = MutableSocketConnection(from, to, type)
+
+        /** TODO */
+        inline fun <reified T> create(
+            from: OutputStreamSocket<T>,
+            to: InputStreamSocket<T>,
+        ) = MutableSocketConnection(from, to, typeOf<T>())
     }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    internal suspend fun pull(): T {
-        lock.lock()
-
-        return if (buffer.isNotEmpty()) {
-            buffer.removeAt(0).also { lock.unlock() }
-        }
-        else {
-            suspendCoroutine { cont ->
-                val added = pullBuffer.offer(cont)
-                lock.unlock()
-                if (!added)
-                    error("TODO")
-            }
-        }
-    }
-
-    internal fun pullOrNull(): T? =
-        lock.withLock {
-            if (buffer.isNotEmpty()) {
-                buffer.removeAt(0)
-            }
-            else {
-                null
-            }
-        }
-
-    internal fun push(value: T) {
-        lock.withLock {
-            if (pullBuffer.isNotEmpty()) {
-                assert(buffer.isEmpty())
-                pullBuffer.take().resume(value)
-                return
-            }
-
-            while (buffer.size >= bufferSize) {
-                val index = overflowStrategy.findDiscarded(buffer, value) % (buffer.size + 1)
-
-                if (index < buffer.size)
-                    buffer.removeAt(index)
-                else
-                    return // we've been told to drop the new value so don't add it and stop
-            }
-
-            buffer.add(value)
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    private val lock = ReentrantLock()
-    private val buffer = mutableListOf<T>()
-    private val pullBuffer = ArrayBlockingQueue<Continuation<T>>(underflowBufferSize)
-    private var bufferSize = DEFAULT_BUFFER_SIZE
-    private var overflowStrategy: OverflowStrategy<T> = discardOldest
 }

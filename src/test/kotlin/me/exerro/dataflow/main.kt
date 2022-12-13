@@ -7,6 +7,22 @@ import me.exerro.dataflow.nodes.consumers.Consume
 import me.exerro.dataflow.nodes.producers.Produce
 import kotlin.time.Duration.Companion.milliseconds
 
+object IncrementAllNumbers: ConfigurationTransformer {
+    context(ConfigurationContext)
+    override fun transform(configuration: Configuration) {
+        for (connection in configuration.connections.filterIsSocketType<Int>()) {
+            val newNode = Transform<Int, Int> { it + 1 }
+            newNode.label = "Inserted incrementer"
+            newNode.input.label = "in"
+            newNode.output.label = "out"
+
+            disconnect(connection)
+            connection.from connectsTo newNode.input
+            newNode.output connectsTo connection.to
+        }
+    }
+}
+
 fun main() {
     val config = Configuration {
         val p1 = Produce(listOf(1, 2, 3, 4, 5))
@@ -28,6 +44,8 @@ fun main() {
         }
         val end = Consume<String> { println("Received: $it") }
             .withMetadata(MetadataKey.Label, "Print")
+
+        transform(IncrementAllNumbers)
 
         inc.input.label = "x"
         inc.output.label = "x + 1"

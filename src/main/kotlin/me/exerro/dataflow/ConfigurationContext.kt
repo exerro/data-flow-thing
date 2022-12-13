@@ -1,16 +1,31 @@
 package me.exerro.dataflow
 
+import kotlin.reflect.KType
+
 /** TODO */
 interface ConfigurationContext {
     /** TODO */
-    infix fun <T> OutputStreamSocket<T>.connectsTo(
-        input: InputStreamSocket<T>,
-    ): SocketConnection<T>
+    fun <T> connect(
+        from: OutputStreamSocket<T>,
+        to: InputStreamSocket<T>,
+        type: KType,
+    ): MutableSocketConnection<T>
 
-    infix fun <T> List<OutputStreamSocket<T>>.connectsTo(
+    /** TODO */
+    fun <T> connect(
+        outputs: List<OutputStreamSocket<T>>,
         inputs: List<InputStreamSocket<T>>,
-    ): List<SocketConnection<T>> {
-        require(size == inputs.size)
-        return zip(inputs).map { (a, b) -> a connectsTo b }
+        type: KType,
+    ): List<MutableSocketConnection<T>> {
+        require(outputs.size == inputs.size)
+        return outputs.zip(inputs).map { (a, b) -> connect(a, b, type) }
     }
+
+    /** TODO */
+    fun disconnect(
+        connection: SocketConnection<*>,
+    )
+
+    /** TODO */
+    fun transform(transformer: ConfigurationTransformer)
 }

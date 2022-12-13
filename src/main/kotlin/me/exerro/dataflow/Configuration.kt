@@ -1,6 +1,8 @@
 package me.exerro.dataflow
 
 import kotlinx.coroutines.*
+import me.exerro.dataflow.internal.SocketBinding
+import kotlin.reflect.KType
 
 /** TODO */
 class Configuration(
@@ -10,15 +12,27 @@ class Configuration(
 ) {
     /** TODO */
     val nodes: Set<Node>
+        get() = privateConnections
+            .flatMap { listOf(it.from.node, it.to.node) }
+            .toSet()
 
     /** TODO */
     val connections: Set<SocketConnection<*>>
+        get() = privateConnections
 
     /** TODO */
-    val unboundInputs: List<InputStreamSocket<*>>
+    val unboundInputs: Set<InputStreamSocket<*>>
+        get() = nodes
+            .flatMap { it.inputs }
+            .filter { !it.isBound() }
+            .toSet()
 
     /** TODO */
-    val unboundOutputs: List<OutputStreamSocket<*>>
+    val unboundOutputs: Set<OutputStreamSocket<*>>
+        get() = nodes
+            .flatMap { it.outputs }
+            .filter { !it.hasAnyBindings() }
+            .toSet()
 
     /** TODO */
     context (CoroutineScope)
@@ -127,40 +141,56 @@ class Configuration(
 
     ////////////////////////////////////////////////////////////////////////////
 
-    init {
-        val connections = mutableListOf<SocketConnection<*>>()
+    /** TODO */
+    private val privateConnections = mutableSetOf<MutableSocketConnection<*>>()
 
-        with (object: ConfigurationContext {
-            override fun <T> OutputStreamSocket<T>.connectsTo(input: InputStreamSocket<T>): SocketConnection<T> {
-                val connection = SocketConnection(this, input, input.parallelConsumers)
-                addConnection(connection)
-                input.setConnection(connection)
-                connections += connection
+    init {
+        val transformers = mutableListOf<ConfigurationTransformer>()
+        var hasInit = false
+        val context = object: ConfigurationContext {
+            override fun <T> connect(
+                from: OutputStreamSocket<T>,
+                to: InputStreamSocket<T>,
+                type: KType,
+            ): MutableSocketConnection<T> {
+                val connection = MutableSocketConnection(from, to, type)
+                privateConnections += connection
                 return connection
             }
-        }, init)
 
-        nodes = connections
-            .flatMap { listOf(it.from.node, it.to.node) }
-            .toSet()
-
-        val allInputs = nodes.flatMap { it.inputs }
-        val allOutputs = nodes.flatMap { it.outputs }
-
-        if (!allowUnboundInputs)
-            for (input in allInputs) {
-                if (!input.hasConnection())
-                    error("TODO: $input")
+            override fun disconnect(connection: SocketConnection<*>) {
+                privateConnections.remove(connection)
             }
 
-        if (!allowUnboundOutputs)
-            for (output in allOutputs) {
-                if (!output.hasConnection())
+            override fun transform(transformer: ConfigurationTransformer) {
+                if (hasInit)
                     error("TODO")
-            }
 
-        unboundInputs = allInputs.filter { !it.hasConnection() }
-        unboundOutputs = allOutputs.filter { !it.hasConnection() }
-        this.connections = connections.toSet()
+                transformers += transformer
+            }
+        }
+
+        with (context, init)
+        hasInit = true
+
+        for (transformer in transformers) {
+            with(context) { transformer.transform(this@Configuration) }
+        }
+
+        for (connection in privateConnections) {
+            val binding = connection.createBinding(connection.to.parallelConsumers)
+            // we restrict the types of the sockets when creating connection
+            // models so these casts are fine
+            @Suppress("UNCHECKED_CAST")
+            connection.from.addBinding(binding as SocketBinding<Nothing>)
+            @Suppress("UNCHECKED_CAST")
+            connection.to.bind(binding as SocketBinding<Any?>)
+        }
+
+        if (!allowUnboundInputs && unboundInputs.isNotEmpty())
+            error("TODO: $unboundInputs")
+
+        if (!allowUnboundOutputs && unboundOutputs.isNotEmpty())
+            error("TODO: $unboundOutputs")
     }
 }

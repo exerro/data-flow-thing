@@ -3,6 +3,7 @@ package me.exerro.dataflow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.yield
 import me.exerro.dataflow.internal.MetadataManager
+import me.exerro.dataflow.internal.SocketBinding
 import kotlin.time.Duration
 
 /**
@@ -33,7 +34,7 @@ open class InputStreamSocket<out T> internal constructor(
      * @see pullWithTimeout
      */
     suspend fun pull(): T {
-        val value = connection.pull()
+        val value = binding.pull()
         this.value = value
         return value
     }
@@ -47,7 +48,7 @@ open class InputStreamSocket<out T> internal constructor(
      * @see pullWithTimeout
      */
     fun pullOrNull(): T? {
-        val value = connection.pullOrNull()
+        val value = binding.pullOrNull()
         if (value != null)
             this.value = value
         return value
@@ -78,14 +79,14 @@ open class InputStreamSocket<out T> internal constructor(
 
     ////////////////////////////////////////////////////////////////////////////
 
-    internal fun hasConnection() =
-        ::connection.isInitialized
+    internal fun isBound() =
+        ::binding.isInitialized
 
-    internal fun setConnection(connection: SocketConnection<@UnsafeVariance T>) {
-        if (hasConnection())
+    internal fun bind(binding: SocketBinding<@UnsafeVariance T>) {
+        if (isBound())
             error("TODO")
 
-        this.connection = connection
+        this.binding = binding
     }
 
     internal var value: @UnsafeVariance T? = null; private set
@@ -108,5 +109,5 @@ open class InputStreamSocket<out T> internal constructor(
     }
 
     private val metadata = mutableMapOf<MetadataKey<*>, Any?>()
-    private lateinit var connection: SocketConnection<T>
+    private lateinit var binding: SocketBinding<T>
 }
