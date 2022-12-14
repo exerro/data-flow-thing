@@ -1,5 +1,6 @@
 package me.exerro.dataflow
 
+import java.util.*
 import kotlin.reflect.KProperty
 import kotlin.reflect.typeOf
 
@@ -32,7 +33,8 @@ infix fun Node.virtuallyConnectsTo(
 ////////////////////////////////////////////////////////////////
 
 operator fun <N: HasMetadata> N.provideDelegate(thisRef: Any?, prop: KProperty<*>) =
-    lazy { withMetadata(MetadataKey.Label, prop.name) }
+    lazy { withMetadata(MetadataKey.Label, prop.name.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) }
 
 ////////////////////////////////////////////////////////////////
 

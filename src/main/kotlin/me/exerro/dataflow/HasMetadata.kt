@@ -12,6 +12,10 @@ interface HasMetadata {
     fun <T> setMetadata(key: MetadataKey<T>, value: T)
 
     /** TODO */
+    fun setMetadata(key: MetadataKey<Unit>) =
+        setMetadata(key, Unit)
+
+    /** TODO */
     fun <T> removeMetadata(key: MetadataKey<T>)
 
     /**
