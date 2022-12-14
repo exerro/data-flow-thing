@@ -37,7 +37,7 @@ object SplitUdpTransform: ConfigurationTransformer {
 
             val sendEncodeNode = Encode(String.serializer())
             sendEncodeNode.label = "UDP Encode"
-            sendEncodeNode.input.label = "in"
+            sendEncodeNode.decoded.label = "in"
 
             val sendNode = UdpSend(port  = 1234, address = InetAddress.getLocalHost())
             sendNode.label = "UDP Send"
@@ -50,15 +50,15 @@ object SplitUdpTransform: ConfigurationTransformer {
 
             val receiveDecodeNode = Decode(String.serializer())
             receiveDecodeNode.label = "UDP Decode"
-            receiveDecodeNode.output.label = "out"
+            receiveDecodeNode.decoded.label = "out"
 
             // Create the connections
-            connection.from connectsTo sendEncodeNode.input
+            connection.from connectsTo sendEncodeNode.decoded
             sendEncodeNode.encoded connectsTo sendNode.input
             sendNode virtuallyConnectsTo receiveNode withLabel "udp"
             receiveNode.output connectsTo receiveUnpackNode.packets
             receiveUnpackNode.data connectsTo receiveDecodeNode.encoded
-            val c2 = receiveDecodeNode.output connectsTo connection.to
+            val c2 = receiveDecodeNode.decoded connectsTo connection.to
 
             // Remove the old connection, and clone its metadata into the latest
             // connection we made

@@ -6,7 +6,7 @@ import me.exerro.dataflow.Node
 import java.net.DatagramPacket
 
 /** TODO */
-open class UdpUnpack: Node() {
+class UdpUnpack: Node() {
     /** TODO */
     val packets = inputStream<DatagramPacket>()
 
@@ -15,11 +15,11 @@ open class UdpUnpack: Node() {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    final override val inputs = listOf(packets)
-    final override val outputs = listOf(data)
+    override val inputs = listOf(packets)
+    override val outputs = listOf(data)
 
     context(CoroutineScope)
-    final override suspend fun start() {
+    override suspend fun start() {
         while (true) {
             val packet = packets.pull()
             val result = ByteArray(packet.length)
@@ -31,7 +31,6 @@ open class UdpUnpack: Node() {
     ////////////////////////////////////////////////////////////////////////////
 
     init {
-        @Suppress("LeakingThis")
         setMetadata(MetadataKey.Label, "UdpUnpack")
     }
 }

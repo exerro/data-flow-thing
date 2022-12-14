@@ -8,7 +8,7 @@ import me.exerro.dataflow.MetadataKey
 import me.exerro.dataflow.Node
 
 /** TODO */
-open class Decode<in T>(
+class Decode<in T>(
     private val serializer: KSerializer<T>,
     private val decoder: (KSerializer<T>, ByteArray) -> T = { s, b ->
         @OptIn(ExperimentalSerializationApi::class)
@@ -19,24 +19,23 @@ open class Decode<in T>(
     val encoded = inputStream<ByteArray>()
 
     /** TODO */
-    val output = outputStream<T>()
+    val decoded = outputStream<T>()
 
     ////////////////////////////////////////////////////////////////////////////
 
-    final override val inputs = listOf(encoded)
-    final override val outputs = listOf(output)
+    override val inputs = listOf(encoded)
+    override val outputs = listOf(decoded)
 
     context(CoroutineScope)
-    final override suspend fun start() {
+    override suspend fun start() {
         while (true) {
-            output.push(decoder(serializer, encoded.pull()))
+            decoded.push(decoder(serializer, encoded.pull()))
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
     init {
-        @Suppress("LeakingThis")
         setMetadata(MetadataKey.Label, "Decode")
     }
 }
